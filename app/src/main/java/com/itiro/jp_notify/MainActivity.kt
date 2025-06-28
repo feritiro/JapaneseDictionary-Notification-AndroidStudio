@@ -1,7 +1,6 @@
 package com.itiro.jp_notify
 
 import android.Manifest
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -21,14 +20,23 @@ class MainActivity : AppCompatActivity() {
     private val notificationId = 101
     private val REQUEST_CODE_POST_NOTIFICATIONS = 1001
 
+    private val listaKanjis = listOf(
+        Kanji("漢", "Han (dinastia chinesa)"),
+        Kanji("日", "Sol, dia"),
+        Kanji("水", "Água"),
+        Kanji("火", "Fogo"),
+        Kanji("木", "Árvore, madeira")
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Solicitar permissão para notificações em Android 13+
+        // Permissão para Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
@@ -41,50 +49,21 @@ class MainActivity : AppCompatActivity() {
 
         val btn = findViewById<Button>(R.id.button)
         btn.setOnClickListener {
-            showNotification("漢", "Significa 'Han' (dinastia chinesa)")
+            showRandomKanjiNotification()
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_POST_NOTIFICATIONS) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permissão concedida
-            } else {
-                // Permissão negada - avise o usuário se quiser
-            }
-        }
-    }
+    private fun showRandomKanjiNotification() {
+        val kanji = listaKanjis.random()
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Notificações de Kanji"
-            val descriptionText = "Flashcards na tela de bloqueio"
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelId, name, importance).apply {
-                description = descriptionText
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-            val notificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun showNotification(titulo: String, descricao: String) {
         val notificationLayout = RemoteViews(packageName, R.layout.notification_custom)
-
-        notificationLayout.setTextViewText(R.id.kanjiTextView, titulo)
-        notificationLayout.setTextViewText(R.id.meaningTextView, descricao)
+        notificationLayout.setTextViewText(R.id.kanjiTextView, kanji.caractere)
+        notificationLayout.setTextViewText(R.id.meaningTextView, kanji.significado)
 
         val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setCustomContentView(notificationLayout) // modo compacto
-            .setCustomBigContentView(notificationLayout) // modo expandido
+            .setCustomContentView(notificationLayout)
+            .setCustomBigContentView(notificationLayout)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -94,4 +73,21 @@ class MainActivity : AppCompatActivity() {
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(notificationId, builder.build())
     }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "Notificações de Kanji"
+            val descriptionText = "Flashcards na tela de bloqueio"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, name, importance).apply {
+                description = descriptionText
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            }
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    data class Kanji(val caractere: String, val significado: String)
 }
