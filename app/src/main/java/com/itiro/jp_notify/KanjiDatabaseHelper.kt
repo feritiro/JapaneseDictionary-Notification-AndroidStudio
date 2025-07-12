@@ -2,7 +2,7 @@ package com.itiro.jp_notify
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
+import android.database.sqlite.SQLiteOpenHelper
 import java.io.File
 import java.io.FileOutputStream
 
@@ -11,58 +11,52 @@ data class Kanji(
     val significado: String
 )
 
-class KanjiDatabaseHelper(private val context: Context) {
+class KanjiDatabaseHelper(private val context: Context) :
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    private val databaseName = "jlpt_words.sqlite"
-    private val databasePath: String = context.getDatabasePath(databaseName).path
-    private var database: SQLiteDatabase? = null
+    companion object {
+        private const val DATABASE_NAME = "jlpt_words.sqlite"
+        private const val DATABASE_VERSION = 1
+    }
 
     init {
         copyDatabaseIfNeeded()
     }
 
     private fun copyDatabaseIfNeeded() {
-        val dbFile = File(databasePath)
+        val dbFile = context.getDatabasePath(DATABASE_NAME)
         if (!dbFile.exists()) {
-            dbFile.parentFile?.mkdirs()
-            context.assets.open(databaseName).use { input ->
+            context.assets.open(DATABASE_NAME).use { input ->
+                dbFile.parentFile?.mkdirs()
                 FileOutputStream(dbFile).use { output ->
                     input.copyTo(output)
                 }
             }
-            Log.d("KanjiDatabaseHelper", "Database copied to $databasePath")
         }
     }
 
-    fun openDatabase() {
-        if (database == null || !database!!.isOpen) {
-            database = SQLiteDatabase.openDatabase(databasePath, null, SQLiteDatabase.OPEN_READONLY)
-        }
-    }
-
-    fun closeDatabase() {
-        database?.close()
-    }
+    override fun onCreate(db: SQLiteDatabase) {}
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
 
     fun getRandomKanji(): Kanji {
-        openDatabase()
-        val cursor = database!!.rawQuery("SELECT word, reading, meaning FROM jlpt_data ORDER BY RANDOM() LIMIT 1", null)
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT word, reading, meaning FROM jlpt_data ORDER BY RANDOM() LIMIT 1", null)
+        var kanji = Kanji("?", "No data")
 
-        val kanji = if (cursor.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             val word = cursor.getString(0)
             val reading = cursor.getString(1)
             val meaning = cursor.getString(2)
 
-            // Se word estiver vazio ou nulo, usa o reading
-            val displayWord = if (word.isNullOrEmpty()) reading else word
+            val displayWord = if (!word.isNullOrEmpty()) {
+                "$word (${reading ?: ""})"
+            } else {
+                reading ?: "?"
+            }
 
-            Kanji(displayWord ?: "?", meaning ?: "No meaning")
-        } else {
-            Kanji("?", "No data")
+            kanji = Kanji(displayWord, meaning ?: "")
         }
-
         cursor.close()
         return kanji
     }
-
 }

@@ -1,7 +1,7 @@
+// MainActivity.kt
 package com.itiro.jp_notify
 
 import android.Manifest
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -14,59 +14,48 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import android.app.Notification
+
 
 class MainActivity : AppCompatActivity() {
 
     private val channelId = "kanji_channel"
     private val notificationId = 101
     private val REQUEST_CODE_POST_NOTIFICATIONS = 1001
-    private lateinit var dbHelper: KanjiDatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Permissão Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    REQUEST_CODE_POST_NOTIFICATIONS
-                )
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_CODE_POST_NOTIFICATIONS)
             }
         }
 
         createNotificationChannel()
-        dbHelper = KanjiDatabaseHelper(this)
+
+        val dbHelper = KanjiDatabaseHelper(this)
 
         val btn = findViewById<Button>(R.id.button)
         btn.setOnClickListener {
-            showRandomKanjiNotification()
+            val kanji = dbHelper.getRandomKanji()
+
+            val notificationLayout = RemoteViews(packageName, R.layout.notification_custom)
+            notificationLayout.setTextViewText(R.id.kanjiTextView, kanji.caractere)
+            notificationLayout.setTextViewText(R.id.meaningTextView, kanji.significado)
+
+            val builder = NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setCustomContentView(notificationLayout)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setAutoCancel(true)
+
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(notificationId, builder.build())
         }
-    }
-
-    private fun showRandomKanjiNotification() {
-        val kanji = dbHelper.getRandomKanji()
-
-        val notificationLayout = RemoteViews(packageName, R.layout.notification_custom)
-        notificationLayout.setTextViewText(R.id.kanjiTextView, kanji.caractere)
-        notificationLayout.setTextViewText(R.id.meaningTextView, kanji.significado)
-
-        val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setCustomContentView(notificationLayout)
-            .setCustomBigContentView(notificationLayout)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setVisibility(Notification.VISIBILITY_PUBLIC)  // Corrigido
-            .setAutoCancel(true)
-
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(notificationId, builder.build())
     }
 
     private fun createNotificationChannel() {
@@ -76,12 +65,10 @@ class MainActivity : AppCompatActivity() {
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(channelId, name, importance).apply {
                 description = descriptionText
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC  // Corrigido
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
-
-    data class Kanji(val caractere: String, val significado: String)
 }
