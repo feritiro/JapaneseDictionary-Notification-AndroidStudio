@@ -1,14 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/button"
+    <CheckBox
+        android:id="@+id/checkbox_n1"
+        android:text="N1"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Mostrar Notificação" />
+        android:layout_height="wrap_content" />
+
+    <CheckBox
+        android:id="@+id/checkbox_n2"
+        android:text="N2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <CheckBox
+        android:id="@+id/checkbox_n3"
+        android:text="N3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <CheckBox
+        android:id="@+id/checkbox_n4"
+        android:text="N4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <CheckBox
+        android:id="@+id/checkbox_n5"
+        android:text="N5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </LinearLayout>

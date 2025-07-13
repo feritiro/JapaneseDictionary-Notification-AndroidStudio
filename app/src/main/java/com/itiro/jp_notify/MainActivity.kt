@@ -1,21 +1,16 @@
 package com.itiro.jp_notify
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
-import android.widget.RemoteViews
+import android.widget.CheckBox
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-
+import androidx.preference.PreferenceManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,10 +21,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
             ) {
                 ActivityCompat.requestPermissions(
                     this,
@@ -39,13 +32,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Registro do receiver só enquanto o app estiver aberto
-        val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
-        registerReceiver(ScreenOffReceiver(), filter)
+        registerReceiver(ScreenOffReceiver(), IntentFilter(Intent.ACTION_SCREEN_OFF))
 
-        val btn = findViewById<Button>(R.id.button)
-        btn.setOnClickListener {
-            NotificationUtils.sendKanjiNotification(this)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+
+        val levels = listOf("n1", "n2", "n3", "n4", "n5")
+        levels.forEach { level ->
+            val checkBoxId = resources.getIdentifier("checkbox_${level}", "id", packageName)
+            val cb = findViewById<CheckBox>(checkBoxId)
+            cb.isChecked = prefs.getBoolean(level, false)
+            cb.setOnCheckedChangeListener { _, isChecked ->
+                prefs.edit().putBoolean(level, isChecked).apply()
+            }
         }
     }
 }
