@@ -1,3 +1,4 @@
+//MainActivity.kt
 package com.itiro.jp_notify
 
 import android.Manifest

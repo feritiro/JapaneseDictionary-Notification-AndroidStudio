@@ -1,3 +1,4 @@
+//ScreenOffReceiver.kt
 package com.itiro.jp_notify
 
 import android.content.BroadcastReceiver

@@ -1,3 +1,4 @@
+//KanjiDatabaseHelper.kt
 package com.itiro.jp_notify
 
 import android.content.Context
